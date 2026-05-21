@@ -1,8 +1,3 @@
-window.setTheme = (theme) => {
-  document.body.className = theme;
-  localStorage.setItem('theme', theme);
-};
-
 document.addEventListener('DOMContentLoaded', () => {
   const quotes = [
     "夜があるから、朝の光は美しい。",
@@ -24,7 +19,7 @@ document.addEventListener('DOMContentLoaded', () => {
     "- As slowly turns the grinding wheel, In the court of the crimson king...",
     "- let the joy of love give you an answer, wakare no toki sae, kudake nu ishi de, 1999 bizarre summer, kawasu yuki ga umu sanka, great days!",
     "- Jealousy, when will you let go?",
-    "- I feel I’m knockin' on heaven’s door",
+    "- I feel I'm knockin' on heaven's door",
     "systemctl stop pulseaudio",
     "pip install opsec",
     "Reconstruct what????",
@@ -44,23 +39,45 @@ document.addEventListener('DOMContentLoaded', () => {
   ];
 
   const messageStream = document.getElementById('message-stream');
+  let lastQuoteIndex = -1;
 
   const addRandomQuote = () => {
-    const index = Math.floor(Math.random() * quotes.length);
+    let index;
+    // Ensure we don't repeat the same quote twice in a row
+    do {
+      index = Math.floor(Math.random() * quotes.length);
+    } while (index === lastQuoteIndex && quotes.length > 1);
+    lastQuoteIndex = index;
+
     const bubble = document.createElement('div');
     bubble.className = 'message-bubble';
     bubble.innerText = quotes[index];
+    bubble.setAttribute('role', 'status');
+    bubble.setAttribute('aria-live', 'polite');
+    
     messageStream.appendChild(bubble);
-    messageStream.scrollTop = messageStream.scrollHeight;
+    
+    // Smooth scroll to bottom
+    requestAnimationFrame(() => {
+      messageStream.scrollTop = messageStream.scrollHeight;
+    });
   };
 
-  // Load saved theme
-  const savedTheme = localStorage.getItem('theme');
-  if (savedTheme) {
-    document.body.className = savedTheme;
-  }
-
   // Auto-quote feature: show a new quote every 5 seconds
-  setInterval(addRandomQuote, 5000);
-  addRandomQuote(); // Initial quote
+  const quoteInterval = setInterval(addRandomQuote, 5000);
+  
+  // Show initial quote
+  addRandomQuote();
+  
+  // Optional: Add click handler to add quote on demand
+  messageStream.addEventListener('click', (e) => {
+    if (e.target.classList.contains('message-bubble')) {
+      addRandomQuote();
+    }
+  });
+  
+  // Clean up interval on page unload
+  window.addEventListener('beforeunload', () => {
+    clearInterval(quoteInterval);
+  });
 });
